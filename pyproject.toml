@@ -1,0 +1,30 @@
+[tool.poetry]
+name = "cbiohub"
+version = "0.1.0"
+description = "Convenience functions for accessing cBioPortal data files"
+authors = ["Ino de Bruijn <ino@ino.bio>"]
+
+[tool.poetry.dependencies]
+python = ">=3.12"
+pyarrow = "^17.0.0"
+tqdm = "^4.66.5"
+pandas = "^2.2.2"
+
+[tool.poetry.dev-dependencies]
+black = "^21.9b0"
+
+[tool.poetry.group.dev.dependencies]
+ipython = "^8.26.0"
+black = "^24.8.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+include = [
+    { path = "src/cbiohub", format = "sdist" }
+]
+
+[tool.black]
+line-length = 88
+target-version = ['py36', 'py37', 'py38', 'py39', 'py310']
