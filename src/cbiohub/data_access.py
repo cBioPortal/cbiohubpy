@@ -1,3 +1,4 @@
+"TODO: This file is not really used anymore - just inspiration"
 import pandas as pd
 import glob
 import os
@@ -5,7 +6,7 @@ from typing import Literal
 from tqdm import tqdm
 import pyarrow.parquet as pq
 import pyarrow as pa
-
+from dynaconf import settings
 
 def get_local_all_combined_data_from_folders(folder):
     return {

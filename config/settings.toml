@@ -1,0 +1,3 @@
+[default]
+processed_path = "~/cbiohub"
+datahub_path = "~/git/datahub"

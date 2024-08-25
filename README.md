@@ -8,7 +8,8 @@ data files from [cBioPortal](https://cbioportal.org). Although several Python
 API clients exist, they work on slices of the cBioPortal data retrieved via the
 REST rather than that they enable easy analysis of all the data files in bulk.
 This package aims to provide a more user-friendly interface for accessing data
-from cBioPortal.
+from cBioPortal like those stored in the public
+[datahub](https://github.com/cBioPortal/datahub).
 
 ## Usage
 
