@@ -7,12 +7,12 @@ from tqdm import tqdm
 import pandas as pd
 import pyarrow as pa
 import time
-import pyarrow.parquet as pq
 from dynaconf import (
     settings,
-)  # Assuming settings is a module with PROCESSED_PATH defined
+)
+from .analyze import find_variant
+from .analyze import MUTATION_COLUMNS
 from .study import Study  # Assuming the Study class is in a file named study.py
-from collections import Counter
 
 settings.PROCESSED_PATH = os.path.expanduser(settings.PROCESSED_PATH)
 
@@ -191,22 +191,7 @@ def combine(output_dir):
                 if mutation_file.exists():
                     table = pq.read_table(mutation_file)
                     # Select only specific columns and adjust their types
-                    columns_to_include = {
-                        "Chromosome": pa.string(),
-                        "Start_Position": pa.string(),
-                        "End_Position": pa.string(),
-                        "Reference_Allele": pa.string(),
-                        "Tumor_Seq_Allele1": pa.string(),
-                        "Tumor_Seq_Allele2": pa.string(),
-                        "t_ref_count": pa.string(),
-                        "t_alt_count": pa.string(),
-                        "n_ref_count": pa.string(),
-                        "n_alt_count": pa.string(),
-                        "Hugo_Symbol": pa.string(),
-                        "HGVSp_Short": pa.string(),
-                        "Tumor_Sample_Barcode": pa.string(),
-                        "study_id": pa.string(),
-                    }
+                    columns_to_include = MUTATION_COLUMNS
 
                     # Filter out columns that do not exist in the table schema
                     existing_columns = {
@@ -296,6 +281,51 @@ def combine(output_dir):
             )
         )
         click.echo(click.style(f"⏱️ Write time: {write_time} seconds", fg="green"))
+
+
+class CustomCommand(click.Command):
+    def format_usage(self, ctx, formatter):
+        formatter.write_usage(
+            ctx.command_path, "[CHROM START END REF ALT] | [GENE PROTEIN_CHANGE]"
+        )
+
+
+@cli.command(
+    cls=CustomCommand,
+    help="Find a variant in the combined mutations parquet and return details. "
+    "You must provide either (chrom, start, end, ref, alt) or (gene, protein_change).",
+)
+@click.argument("arg1", required=False)
+@click.argument("arg2", required=False)
+@click.argument("arg3", required=False)
+@click.argument("arg4", required=False)
+@click.argument("arg5", required=False)
+def find(arg1, arg2, arg3, arg4, arg5):
+    """Find a variant in the combined mutations parquet and return details."""
+    if arg1 and arg2 and arg3 and arg4:
+        # assuming chrom/pos/start/end
+        exists, unique_ids = find_variant(
+            chrom=arg1, start=arg2, end=arg3, ref=arg4, alt=arg5
+        )
+    elif arg1 and arg2:
+        # assuming gene/protein_change
+        exists, unique_ids = find_variant(hugo_symbol=arg1, protein_change=arg2)
+    else:
+        click.echo(click.style("❌ Invalid arguments.", fg="red"))
+        return
+
+    if exists:
+        studies = set([id.split(":")[0] for id in unique_ids])
+        click.echo(
+            click.style(
+                f"✅ Variant found in {len(unique_ids)} samples across {len(studies)} studies:",
+                fg="green",
+            )
+        )
+        for unique_id in unique_ids:
+            click.echo(click.style(unique_id, fg="green"))
+    else:
+        click.echo(click.style("❌ Variant not found.", fg="red"))
 
 
 if __name__ == "__main__":
