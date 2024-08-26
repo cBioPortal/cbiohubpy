@@ -8,6 +8,7 @@ import pyarrow.parquet as pq
 import pyarrow as pa
 from dynaconf import settings
 
+
 def get_local_all_combined_data_from_folders(folder):
     return {
         "maf": get_local_combined_data_from_folders(folder, "mutations"),

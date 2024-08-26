@@ -3,6 +3,7 @@ from dynaconf import settings
 from study import Study
 import glob
 
+
 class RepoManager:
     def __init__(self, base_path):
         self.base_path = Path(base_path).expanduser()
@@ -12,7 +13,10 @@ class RepoManager:
         """Load all studies from the base directory based on the presence of meta_study.txt."""
         studies = []
         for study_path in glob.glob(str(self.base_path / "**"), recursive=True):
-            if Path(study_path).is_dir() and (Path(study_path) / 'meta_study.txt').exists():
+            if (
+                Path(study_path).is_dir()
+                and (Path(study_path) / "meta_study.txt").exists()
+            ):
                 studies.append(Study(Path(study_path)))
         return studies
 
@@ -27,14 +31,15 @@ class RepoManager:
                 return study
         raise FileNotFoundError(f"Study {study_name} not found.")
 
+
 # Example usage
 if __name__ == "__main__":
     manager = RepoManager(settings.DATAHUB_PATH)
-    
+
     # List all studies
     studies = manager.list_studies()
     print("Studies:", studies)
-    
+
     # Get a specific study
     study_name = "msk_impact_2017"
     try:
@@ -44,7 +49,7 @@ if __name__ == "__main__":
         print(f"Mutation files in {study_name}:", study.list_files("mutation"))
     except FileNotFoundError as e:
         print(e)
-    
+
     # Get a specific file in a study
     file_name = "data_clinical_sample.txt"
     try:
