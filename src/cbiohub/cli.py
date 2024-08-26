@@ -10,6 +10,7 @@ import time
 import pyarrow.parquet as pq
 from dynaconf import settings  # Assuming settings is a module with PROCESSED_PATH defined
 from .study import Study  # Assuming the Study class is in a file named study.py
+from collections import Counter
 
 settings.PROCESSED_PATH = os.path.expanduser(settings.PROCESSED_PATH)
 
@@ -106,10 +107,12 @@ def version():
         click.echo("Package metadata not found. Ensure the project is installed.")
 
 @cli.command()
-def combine():
+@click.option('--output-dir', type=click.Path(), default=None, help="Optional output directory for combined files.")
+def combine(output_dir):
     """Combine all processed studies into a single combined processed study."""
     processed_studies_path = Path(settings.PROCESSED_PATH) / 'studies'
-    combined_path = Path(settings.PROCESSED_PATH) / 'combined'
+    combined_path = Path(output_dir) if output_dir else Path(settings.PROCESSED_PATH) / 'combined'
+
     combined_path.mkdir(parents=True, exist_ok=True)
 
     mutation_tables = []
@@ -133,7 +136,31 @@ def combine():
                 clinical_sample_file = study.processed_path / 'data_clinical_sample.parquet'
 
                 if mutation_file.exists():
-                    mutation_tables.append(pq.read_table(mutation_file))
+                    table = pq.read_table(mutation_file)
+                    # Select only specific columns and adjust their types
+                    columns_to_include = {
+                        "Chromosome": pa.string(),
+                        "Start_Position": pa.string(),
+                        "End_Position": pa.string(),
+                        "Reference_Allele": pa.string(),
+                        "Tumor_Seq_Allele1": pa.string(),
+                        "Tumor_Seq_Allele2": pa.string(),
+                        "t_ref_count": pa.string(),
+                        "t_alt_count": pa.string(),
+                        "n_ref_count": pa.string(),
+                        "n_alt_count": pa.string(),
+                        "Hugo_Symbol": pa.string(),
+                        "HGVSp_Short": pa.string(),
+                        "Tumor_Sample_Barcode": pa.string(),
+                        "study_id": pa.string()
+                    }
+
+                    # Filter out columns that do not exist in the table schema
+                    existing_columns = {col: dtype for col, dtype in columns_to_include.items() if col in table.schema.names}
+
+                    table = table.select(list(existing_columns.keys()))
+                    table = table.cast(pa.schema(existing_columns))
+                    mutation_tables.append(table)
                 if clinical_patient_file.exists():
                     clinical_patient_tables.append(pq.read_table(clinical_patient_file))
                 if clinical_sample_file.exists():
