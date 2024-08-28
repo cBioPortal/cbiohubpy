@@ -2,14 +2,15 @@
 
 **WARNING ⚠️: This package is still under construction.**
 
-
 `cbiohub` is a Python package that provides convenience functions for analyzing
 data files from [cBioPortal](https://cbioportal.org). Although several Python
 API clients exist, they work on slices of the cBioPortal data retrieved via the
 REST rather than that they enable easy analysis of all the data files in bulk.
 This package aims to provide a more user-friendly interface for accessing data
 from cBioPortal like those stored in the public
-[datahub](https://github.com/cBioPortal/datahub).
+[datahub](https://github.com/cBioPortal/datahub). By using parquet files, rather
+than flat csv/tsv files, the data can be analyzed much more quickly and
+efficiently.
 
 ## Usage
 
@@ -20,7 +21,7 @@ from cBioPortal like those stored in the public
 You can e.g. download the cBioPortal datahub files:
 
 ```sh
-git clone git@github.com:cbioportal/datahub
+git clone git@github.com:cbioportal/datahub ~/git/datahub
 ```
 
 ### Step 2: Ingest and Combine
@@ -32,7 +33,7 @@ Now ingest them i.e. convert them into parquet files on your local machine:
 cbiohub ingest ~/git/datahub/public/
 ```
 
-All the data by default gets stored in `~/cbiohub/`. Now you can combine all the study data together into a single combined study:
+All the data by default gets stored in `~/cbiohub/`. Combine all the study data together into a single study:
 
 ```sh
 cbiohub combine
@@ -40,7 +41,8 @@ cbiohub combine
 
 ### Step 3: Analyze
 
-Now you can use the `cbiohub` package to analyze the data. For example, you can load the combined study data into a pandas DataFrame:
+Now you can use the `cbiohub` package to analyze the data quickly. For example,
+you can load the combined study data into a pandas DataFrame:
 
 ```python
 import cbiohub
