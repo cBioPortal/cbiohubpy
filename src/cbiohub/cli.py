@@ -10,9 +10,14 @@ import time
 from dynaconf import (
     settings,
 )
-from .analyze import find_variant
-from .analyze import MUTATION_COLUMNS
+from .analyze import (
+    find_variant,
+    get_genomic_coordinates_by_gene_and_protein_change,
+    variant_frequency_per_cancer_type,
+    MUTATION_COLUMNS,
+)
 from .study import Study  # Assuming the Study class is in a file named study.py
+from tabulate import tabulate
 
 settings.PROCESSED_PATH = os.path.expanduser(settings.PROCESSED_PATH)
 
@@ -326,6 +331,70 @@ def find(arg1, arg2, arg3, arg4, arg5):
             click.echo(click.style(unique_id, fg="green"))
     else:
         click.echo(click.style("❌ Variant not found.", fg="red"))
+
+
+@cli.command(help="Check how frequently a particular variant occurs per cancer type.")
+@click.argument("chrom")
+@click.argument("start", type=int)
+@click.argument("end", type=int)
+@click.argument("ref")
+@click.argument("alt")
+@click.option(
+    "--clinical-attribute",
+    default="CANCER_TYPE",
+    help="Clinical attribute to group by (default: CANCER_TYPE)",
+)
+@click.option(
+    "--processed-dir",
+    default=None,
+    help="Directory containing the processed parquet files",
+)
+def variant_frequency(chrom, start, end, ref, alt, clinical_attribute, processed_dir):
+    """Check how frequently a particular variant occurs per cancer type (or
+    other clinical sample attributes)."""
+    result = variant_frequency_per_cancer_type(
+        chrom, start, end, ref, alt, clinical_attribute, directory=processed_dir
+    )
+    if result:
+        click.echo(
+            click.style(f"✅ Variant frequency per {clinical_attribute}:", fg="green")
+        )
+        headers = ["Cancer Type", "Count"]
+        table = tabulate(result, headers, tablefmt="plain")
+        click.echo(table)
+    else:
+        click.echo(click.style("❌ No data found.", fg="red"))
+
+
+@cli.command(
+    help="Convert a gene and protein change to genomic coordinates and count occurrences."
+)
+@click.argument("gene")
+@click.argument("protein_change")
+@click.option(
+    "--processed-dir",
+    default=None,
+    help="Directory containing the processed parquet files",
+)
+def convert(gene, protein_change, processed_dir):
+    """Convert a gene and protein change to its corresponding genomic coordinates and count occurrences."""
+    try:
+        results = get_genomic_coordinates_by_gene_and_protein_change(
+            gene, protein_change, directory=processed_dir
+        )
+        if results:
+            click.echo(
+                click.style(
+                    f"✅ Genomic coordinates for {gene} {protein_change}:", fg="green"
+                )
+            )
+            headers = ["Chromosome", "Start", "End", "Ref", "Alt", "Frequency"]
+            table = tabulate(results, headers, tablefmt="plain")
+            click.echo(table)
+        else:
+            click.echo(click.style("❌ No data found.", fg="red"))
+    except ValueError as e:
+        click.echo(click.style(str(e), fg="red"))
 
 
 if __name__ == "__main__":

@@ -2,6 +2,7 @@ from pathlib import Path
 
 import pyarrow.parquet as pq
 import pyarrow.dataset as ds
+import duckdb
 import pyarrow as pa
 import pandas as pd
 from dynaconf import settings
@@ -112,3 +113,74 @@ def find_variant(
         return variant_exists_by_protein_change(hugo_symbol, protein_change, directory)
     else:
         raise ValueError("Insufficient arguments provided to find a variant.")
+
+
+def variant_frequency_per_cancer_type(
+    chrom, start, end, ref, alt, clinical_attribute, directory=None
+):
+    """Check how frequently a particular variant occurs per cancer type."""
+    if directory is None:
+        directory = Path(settings.PROCESSED_PATH) / "combined"
+    else:
+        directory = Path(directory)
+
+    mutations_path = directory / "combined_mutations.parquet"
+    clinical_path = directory / "combined_clinical_sample.parquet"
+
+    query = f"""
+    SELECT clinical.{clinical_attribute}, COUNT(*) as frequency
+    FROM '{mutations_path}' AS mutations
+    JOIN '{clinical_path}' AS clinical
+    ON mutations.Tumor_Sample_Barcode = clinical.SAMPLE_ID
+    WHERE mutations.Chromosome = '{chrom}'
+    AND mutations.Start_Position = '{start}'
+    AND mutations.End_Position = '{end}'
+    AND mutations.Reference_Allele = '{ref}'
+    AND mutations.Tumor_Seq_Allele2 = '{alt}'
+    GROUP BY clinical.{clinical_attribute}
+    ORDER BY frequency DESC
+    """
+
+    con = duckdb.connect()
+    result = con.execute(query).fetchall()
+    con.close()
+
+    return result
+
+
+def get_genomic_coordinates_by_gene_and_protein_change(
+    gene, protein_change, directory=None
+):
+    """Convert a gene name and protein change to its corresponding genomic coordinates and count occurrences."""
+    if directory is None:
+        directory = Path(settings.PROCESSED_PATH) / "combined"
+    else:
+        directory = Path(directory)
+
+    mutations_path = directory / "combined_mutations.parquet"
+
+    # Ensure the protein change starts with "p."
+    protein_change = (
+        protein_change if protein_change.startswith("p.") else f"p.{protein_change}"
+    )
+
+    query = f"""
+    SELECT 
+        Chromosome, 
+        Start_Position, 
+        End_Position, 
+        Reference_Allele, 
+        Tumor_Seq_Allele2, 
+        COUNT(*) as frequency
+    FROM '{mutations_path}'
+    WHERE Hugo_Symbol = '{gene}'
+    AND HGVSp_Short = '{protein_change}'
+    GROUP BY Chromosome, Start_Position, End_Position, Reference_Allele, Tumor_Seq_Allele2
+    ORDER BY frequency DESC
+    """
+
+    con = duckdb.connect()
+    result = con.execute(query).fetchall()
+    con.close()
+
+    return result
