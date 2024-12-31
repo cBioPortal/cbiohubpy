@@ -60,7 +60,7 @@ kirp_tcga:TCGA-UZ-A9PP-01
 ...
 ```
 
-or search for the same BRAF V600E variant but with a specific genomic change
+Search for the same BRAF V600E variant but with a specific genomic change
 (A>T):
 
 ```sh
@@ -68,6 +68,18 @@ or search for the same BRAF V600E variant but with a specific genomic change
 ✅ Variant found in 3571 samples across 117 studies:
 kirp_tcga:TCGA-AL-3467-01
 kirp_tcga:TCGA-UZ-A9PP-01
+...
+```
+
+Determine the variant frequency across different cancer types:
+
+```sh
+> cbiohub variant-frequency 7 140453136 140453136 A T
+CANCER_TYPE                              altered_samples    total_samples    freq
+Thyroid Cancer                                      1475             1651    89.3
+Melanoma                                            1871             3881    48.2
+Histiocytosis                                         88              223    39.5
+Colorectal Cancer                                   2042             8829    23.1
 ...
 ```
 
@@ -107,4 +119,5 @@ poetry run ipython
 
 ## TODO
 
-- [ ] Add github action datahub that usies cbiohub to push combined parquet data to hugging face (https://huggingface.co/datasets/cBioPortal/datahub)
+- [ ] For `variant-frequency` command handle gene panels
+- [ ] Add github action datahub that uses cbiohub to push combined parquet data to hugging face (https://huggingface.co/datasets/cBioPortal/datahub)

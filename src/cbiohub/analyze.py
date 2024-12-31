@@ -115,7 +115,7 @@ def find_variant(
         raise ValueError("Insufficient arguments provided to find a variant.")
 
 
-def variant_frequency_per_cancer_type(
+def variant_frequency_per_clinical_attribute(
     chrom, start, end, ref, alt, clinical_attribute, directory=None
 ):
     """Check how frequently a particular variant occurs per cancer type."""
@@ -128,17 +128,34 @@ def variant_frequency_per_cancer_type(
     clinical_path = directory / "combined_clinical_sample.parquet"
 
     query = f"""
-    SELECT clinical.{clinical_attribute}, COUNT(*) as frequency
+    WITH TotalSamples AS (
+        SELECT
+            clinical.{clinical_attribute},
+            COUNT(DISTINCT SAMPLE_ID) AS total_samples
+        FROM '{clinical_path}' AS clinical
+        GROUP BY clinical.{clinical_attribute}
+    )
+    SELECT
+        clinical.{clinical_attribute},
+        COUNT(*) AS altered_samples,
+        TotalSamples.total_samples,
+        ROUND((COUNT(*) * 100.0 / TotalSamples.total_samples), 1) AS freq
     FROM '{mutations_path}' AS mutations
     JOIN '{clinical_path}' AS clinical
-    ON mutations.Tumor_Sample_Barcode = clinical.SAMPLE_ID
-    WHERE mutations.Chromosome = '{chrom}'
-    AND mutations.Start_Position = '{start}'
-    AND mutations.End_Position = '{end}'
-    AND mutations.Reference_Allele = '{ref}'
-    AND mutations.Tumor_Seq_Allele2 = '{alt}'
-    GROUP BY clinical.{clinical_attribute}
-    ORDER BY frequency DESC
+        ON mutations.Tumor_Sample_Barcode = clinical.SAMPLE_ID
+    JOIN TotalSamples
+        ON clinical.{clinical_attribute} = TotalSamples.{clinical_attribute}
+    WHERE
+        mutations.Chromosome = '{chrom}'
+        AND mutations.Start_Position = '{start}'
+        AND mutations.End_Position = '{end}'
+        AND mutations.Reference_Allele = '{ref}'
+        AND mutations.Tumor_Seq_Allele2 = '{alt}'
+    GROUP BY
+        clinical.{clinical_attribute},
+        TotalSamples.total_samples
+    ORDER BY
+        freq DESC;
     """
 
     con = duckdb.connect()

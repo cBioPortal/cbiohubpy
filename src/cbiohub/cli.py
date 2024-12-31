@@ -12,7 +12,7 @@ from dynaconf import (
 from .analyze import (
     find_variant,
     get_genomic_coordinates_by_gene_and_protein_change,
-    variant_frequency_per_cancer_type,
+    variant_frequency_per_clinical_attribute,
     MUTATION_COLUMNS,
 )
 from .data_commands import data  # Import the data subcommand group
@@ -117,14 +117,14 @@ def find(arg1, arg2, arg3, arg4, arg5):
 def variant_frequency(chrom, start, end, ref, alt, clinical_attribute, processed_dir):
     """Check how frequently a particular variant occurs per cancer type (or
     other clinical sample attributes)."""
-    result = variant_frequency_per_cancer_type(
+    result = variant_frequency_per_clinical_attribute(
         chrom, start, end, ref, alt, clinical_attribute, directory=processed_dir
     )
     if result:
         click.echo(
             click.style(f"✅ Variant frequency per {clinical_attribute}:", fg="green")
         )
-        headers = ["Cancer Type", "Count"]
+        headers = [clinical_attribute, "altered_samples", "total_samples", "freq"]
         table = tabulate(result, headers, tablefmt="plain")
         click.echo(table)
     else:
@@ -154,7 +154,7 @@ def convert(gene, protein_change, processed_dir):
                     f"✅ Genomic coordinates for {gene} {protein_change}:", fg="green"
                 )
             )
-            headers = ["Chromosome", "Start", "End", "Ref", "Alt", "Frequency"]
+            headers = ["Chromosome", "Start", "End", "Ref", "Alt", "Count"]
             table = tabulate(results, headers, tablefmt="plain")
             click.echo(table)
         else:
