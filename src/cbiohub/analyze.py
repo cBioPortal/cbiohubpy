@@ -116,7 +116,7 @@ def find_variant(
 
 
 def variant_frequency_per_clinical_attribute(
-    chrom, start, end, ref, alt, clinical_attribute, directory=None
+    chrom, start, end, ref, alt, clinical_attribute, directory=None, group_by_study_id=False, count_samples=False
 ):
     """Check how frequently a particular variant occurs per cancer type."""
     if directory is None:
@@ -125,26 +125,35 @@ def variant_frequency_per_clinical_attribute(
         directory = Path(directory)
 
     mutations_path = directory / "combined_mutations.parquet"
-    clinical_path = directory / "combined_clinical_sample.parquet"
+    clinical_sample_path = directory / "combined_clinical_sample.parquet"
+    count_attribute = "SAMPLE_ID" if count_samples else "PATIENT_ID"
+
+    select_clause = f"clinical.{clinical_attribute}, COUNT(DISTINCT clinical.{count_attribute}) AS altered, TotalPerAttribute.total, ROUND((COUNT(*) * 100.0 / TotalPerAttribute.total), 1) AS freq"
+    group_by_clause = f"clinical.{clinical_attribute}, TotalPerAttribute.total"
+    total_group_by = f"clinical.{clinical_attribute}"
+    total_join = f"clinical.{clinical_attribute} = TotalPerAttribute.{clinical_attribute}"
+    total_select = f"clinical.{clinical_attribute}, COUNT(DISTINCT {count_attribute}) AS total"
+
+    if group_by_study_id:
+        total_select = f"clinical.STUDY_ID, {total_select}"
+        total_group_by = f"clinical.STUDY_ID, {total_group_by}"
+        total_join = f"clinical.STUDY_ID = TotalPerAttribute.STUDY_ID AND {total_join}"
+        select_clause = f"clinical.STUDY_ID, {select_clause}"
+        group_by_clause = f"clinical.STUDY_ID, {group_by_clause}"
 
     query = f"""
-    WITH TotalSamples AS (
-        SELECT
-            clinical.{clinical_attribute},
-            COUNT(DISTINCT SAMPLE_ID) AS total_samples
-        FROM '{clinical_path}' AS clinical
-        GROUP BY clinical.{clinical_attribute}
+    WITH TotalPerAttribute AS (
+        SELECT {total_select}
+        FROM '{clinical_sample_path}' AS clinical
+        GROUP BY {total_group_by}
     )
     SELECT
-        clinical.{clinical_attribute},
-        COUNT(*) AS altered_samples,
-        TotalSamples.total_samples,
-        ROUND((COUNT(*) * 100.0 / TotalSamples.total_samples), 1) AS freq
+        {select_clause}
     FROM '{mutations_path}' AS mutations
-    JOIN '{clinical_path}' AS clinical
+    JOIN '{clinical_sample_path}' AS clinical
         ON mutations.Tumor_Sample_Barcode = clinical.SAMPLE_ID
-    JOIN TotalSamples
-        ON clinical.{clinical_attribute} = TotalSamples.{clinical_attribute}
+    JOIN TotalPerAttribute
+        ON {total_join}
     WHERE
         mutations.Chromosome = '{chrom}'
         AND mutations.Start_Position = '{start}'
@@ -152,8 +161,7 @@ def variant_frequency_per_clinical_attribute(
         AND mutations.Reference_Allele = '{ref}'
         AND mutations.Tumor_Seq_Allele2 = '{alt}'
     GROUP BY
-        clinical.{clinical_attribute},
-        TotalSamples.total_samples
+        {group_by_clause}
     ORDER BY
         freq DESC;
     """

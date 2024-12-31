@@ -113,18 +113,31 @@ def find(arg1, arg2, arg3, arg4, arg5):
     default="CANCER_TYPE",
     help="Clinical attribute to group by (default: CANCER_TYPE)",
 )
+@click.option(
+    "--group-by-study-id",
+    is_flag=True,
+    default=False,
+    help="Group the results by cancer study id",
+)
+@click.option(
+    "--count-samples",
+    is_flag=True,
+    default=False,
+    help="Count samples instead of patients",
+)
 @common_options
-def variant_frequency(chrom, start, end, ref, alt, clinical_attribute, processed_dir):
+def variant_frequency(chrom, start, end, ref, alt, clinical_attribute, processed_dir, group_by_study_id, count_samples):
     """Check how frequently a particular variant occurs per cancer type (or
     other clinical sample attributes)."""
     result = variant_frequency_per_clinical_attribute(
-        chrom, start, end, ref, alt, clinical_attribute, directory=processed_dir
+        chrom, start, end, ref, alt, clinical_attribute, directory=processed_dir, group_by_study_id=group_by_study_id,
+        count_samples=count_samples
     )
     if result:
         click.echo(
             click.style(f"✅ Variant frequency per {clinical_attribute}:", fg="green")
         )
-        headers = [clinical_attribute, "altered_samples", "total_samples", "freq"]
+        headers = [clinical_attribute, "altered", "total", "freq"]
         table = tabulate(result, headers, tablefmt="plain")
         click.echo(table)
     else:

@@ -75,11 +75,12 @@ Determine the variant frequency across different cancer types:
 
 ```sh
 > cbiohub variant-frequency 7 140453136 140453136 A T
-CANCER_TYPE                              altered_samples    total_samples    freq
-Thyroid Cancer                                      1475             1651    89.3
-Melanoma                                            1871             3881    48.2
-Histiocytosis                                         88              223    39.5
-Colorectal Cancer                                   2042             8829    23.1
+✅ Variant frequency per CANCER_TYPE:
+CANCER_TYPE                              altered    total    freq
+Thyroid Cancer                               770     1774    83.1
+Melanoma                                     831     2902    64.5
+Histiocytosis                                 42      160    55
+Colorectal Cancer                            501     6479    31.5
 ...
 ```
 
