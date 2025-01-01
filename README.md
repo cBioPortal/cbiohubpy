@@ -16,7 +16,7 @@ are a common standard, one can use many other programming languages or data ware
 
 <img width="714" alt="image" src="https://github.com/user-attachments/assets/9a1c9a79-7336-49ce-89b1-43c5b614f0ea" />
 
-For convenience, pre-combined parquet files from [datahub](https://github.com/cbioPortal/datahub) are directly available from hugging face: https://huggingface.co/datasets/cBioPortal/datahub/tree/main/data. They can be used directly
+For convenience, pre-combined parquet files for [datahub](https://github.com/cbioPortal/datahub) are available from [Hugging Face](https://huggingface.co/datasets/cBioPortal/datahub/tree/main/data).
 
 ## Usage
 
