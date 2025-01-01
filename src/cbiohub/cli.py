@@ -80,16 +80,17 @@ class CustomCommand(click.Command):
 @click.argument("arg3", required=False)
 @click.argument("arg4", required=False)
 @click.argument("arg5", required=False)
-def find(arg1, arg2, arg3, arg4, arg5):
+@common_options
+def find(arg1, arg2, arg3, arg4, arg5, processed_dir, sql):
     """Find a variant in the combined mutations parquet and return details."""
     if arg1 and arg2 and arg3 and arg4:
         # assuming chrom/pos/start/end
         exists, unique_ids = find_variant(
-            chrom=arg1, start=arg2, end=arg3, ref=arg4, alt=arg5
+            chrom=arg1, start=arg2, end=arg3, ref=arg4, alt=arg5, directory=processed_dir
         )
     elif arg1 and arg2:
         # assuming gene/protein_change
-        exists, unique_ids = find_variant(hugo_symbol=arg1, protein_change=arg2)
+        exists, unique_ids = find_variant(hugo_symbol=arg1, protein_change=arg2, directory=processed_dir)
     else:
         click.echo(click.style("❌ Invalid arguments.", fg="red"))
         return
