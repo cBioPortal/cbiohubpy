@@ -84,6 +84,24 @@ Colorectal Cancer                            501     6479    31.5
 ...
 ```
 
+Instead of displaying the results you can also get the sql directly with the
+`--sql` flag. Under the hood `cbiohub` uses `duckdb` to run the sql queries. By
+piping the output to `duckdb` you can run the sql queries directly (and edit
+them to your liking):
+
+```sh
+> cbiohub variant-frequency BRAF V600E  --sql | duckdb
+┌───────────────────────────────────────┬─────────┬───────┬────────┐
+│              CANCER_TYPE              │ altered │ total │  freq  │
+│                varchar                │  int64  │ int64 │ double │
+├───────────────────────────────────────┼─────────┼───────┼────────┤
+│ Thyroid Cancer                        │     775 │  1774 │   43.7 │
+...
+```
+
+After data digestion, `cbiohub` mainly provides a convenient command line
+interface to run sql queries against a set of harmonized parquet files.
+
 ### Clean
 
 Remove all local parquet files.

@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 import shutil
+from cbiohub.variant import GenomicVariant, ProteinVariant
 import click
 import importlib.metadata
 import pandas as pd
@@ -29,6 +30,12 @@ def common_options(func):
         default=None,
         help="Directory containing the processed parquet files",
     )(func)
+    func = click.option(
+        "--sql",
+        is_flag=True,
+        default=False,
+        help="Output SQL command rather than the result",
+    )(func)
     return func
 
 
@@ -38,7 +45,6 @@ def cli():
 
 
 cli.add_command(data)
-
 
 @cli.command()
 def config():
@@ -101,13 +107,23 @@ def find(arg1, arg2, arg3, arg4, arg5):
     else:
         click.echo(click.style("❌ Variant not found.", fg="red"))
 
+def detect_variant_type(args):
+    """
+    Detects the variant type based on the number and structure of arguments.
+
+    Returns:
+        - GenomicVariant if args match chrom/start/end/ref/alt
+        - ProteinVariant if args match gene/protein_change
+    """
+    if len(args) == 5:
+        return GenomicVariant(*args)
+    elif len(args) == 2:
+        return ProteinVariant(*args)
+    else:
+        raise click.UsageError("Could not detect variant type. Ensure arguments match either chrom/start/end/ref/alt or gene/protein_change format.")
 
 @cli.command(help="Check how frequently a particular variant occurs per cancer type.")
-@click.argument("chrom")
-@click.argument("start", type=int)
-@click.argument("end", type=int)
-@click.argument("ref")
-@click.argument("alt")
+@click.argument('args', nargs=-1, required=True)
 @click.option(
     "--clinical-attribute",
     default="CANCER_TYPE",
@@ -126,13 +142,18 @@ def find(arg1, arg2, arg3, arg4, arg5):
     help="Count samples instead of patients",
 )
 @common_options
-def variant_frequency(chrom, start, end, ref, alt, clinical_attribute, processed_dir, group_by_study_id, count_samples):
+def variant_frequency(args, clinical_attribute, processed_dir, sql, group_by_study_id, count_samples):
     """Check how frequently a particular variant occurs per cancer type (or
     other clinical sample attributes)."""
+    variant = detect_variant_type(args)
+
     result = variant_frequency_per_clinical_attribute(
-        chrom, start, end, ref, alt, clinical_attribute, directory=processed_dir, group_by_study_id=group_by_study_id,
+        variant, clinical_attribute, directory=processed_dir, sql=sql, group_by_study_id=group_by_study_id,
         count_samples=count_samples
     )
+    if sql:
+        return print(result)
+
     if result:
         click.echo(
             click.style(f"✅ Variant frequency per {clinical_attribute}:", fg="green")
@@ -155,7 +176,7 @@ def variant_frequency(chrom, start, end, ref, alt, clinical_attribute, processed
     help="Directory containing the processed parquet files",
 )
 @common_options
-def convert(gene, protein_change, processed_dir):
+def convert(gene, protein_change, processed_dir, sql):
     """Convert a gene and protein change to its corresponding genomic coordinates and count occurrences."""
     try:
         results = get_genomic_coordinates_by_gene_and_protein_change(

@@ -1,11 +1,13 @@
 from pathlib import Path
-
+from typing import Union
 import pyarrow.parquet as pq
 import pyarrow.dataset as ds
 import duckdb
 import pyarrow as pa
 import pandas as pd
 from dynaconf import settings
+
+from cbiohub.variant import GenomicVariant, ProteinVariant
 
 MUTATION_COLUMNS = {
     "Chromosome": pa.string(),
@@ -116,7 +118,8 @@ def find_variant(
 
 
 def variant_frequency_per_clinical_attribute(
-    chrom, start, end, ref, alt, clinical_attribute, directory=None, group_by_study_id=False, count_samples=False
+    variant: Union[GenomicVariant, ProteinVariant], clinical_attribute,
+    directory=None, group_by_study_id=False, count_samples=False, sql=False
 ):
     """Check how frequently a particular variant occurs per cancer type."""
     if directory is None:
@@ -128,7 +131,28 @@ def variant_frequency_per_clinical_attribute(
     clinical_sample_path = directory / "combined_clinical_sample.parquet"
     count_attribute = "SAMPLE_ID" if count_samples else "PATIENT_ID"
 
-    select_clause = f"clinical.{clinical_attribute}, COUNT(DISTINCT clinical.{count_attribute}) AS altered, TotalPerAttribute.total, ROUND((COUNT(*) * 100.0 / TotalPerAttribute.total), 1) AS freq"
+    if isinstance(variant, GenomicVariant):
+        where_clause = f"""
+            mutations.Chromosome = '{variant.chrom}'
+            AND mutations.Start_Position = '{variant.start}'
+            AND mutations.End_Position = '{variant.end}'
+            AND mutations.Reference_Allele = '{variant.ref}'
+            AND mutations.Tumor_Seq_Allele2 = '{variant.alt}'
+        """
+    elif isinstance(variant, ProteinVariant):
+        where_clause = f"""
+            mutations.Hugo_Symbol = '{variant.gene}'
+            AND mutations.HGVSp_Short = '{variant.protein_change}'
+        """
+    else:
+        raise TypeError("Unsupported variant type.")
+
+    select_clause = f"""
+        clinical.{clinical_attribute},
+        COUNT(DISTINCT clinical.{count_attribute}) AS altered,
+        TotalPerAttribute.total,
+        ROUND((COUNT(DISTINCT clinical.{count_attribute}) * 100.0 / TotalPerAttribute.total), 1) AS freq
+    """
     group_by_clause = f"clinical.{clinical_attribute}, TotalPerAttribute.total"
     total_group_by = f"clinical.{clinical_attribute}"
     total_join = f"clinical.{clinical_attribute} = TotalPerAttribute.{clinical_attribute}"
@@ -155,22 +179,20 @@ def variant_frequency_per_clinical_attribute(
     JOIN TotalPerAttribute
         ON {total_join}
     WHERE
-        mutations.Chromosome = '{chrom}'
-        AND mutations.Start_Position = '{start}'
-        AND mutations.End_Position = '{end}'
-        AND mutations.Reference_Allele = '{ref}'
-        AND mutations.Tumor_Seq_Allele2 = '{alt}'
+        {where_clause}
     GROUP BY
         {group_by_clause}
     ORDER BY
         freq DESC;
     """
 
-    con = duckdb.connect()
-    result = con.execute(query).fetchall()
-    con.close()
-
-    return result
+    if not sql:
+        con = duckdb.connect()
+        result = con.execute(query).fetchall()
+        con.close()
+        return result
+    else:
+        return query
 
 
 def get_genomic_coordinates_by_gene_and_protein_change(
