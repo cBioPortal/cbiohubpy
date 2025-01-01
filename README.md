@@ -2,15 +2,14 @@
 
 **WARNING ⚠️: This package is still under construction.**
 
-`cbiohub` is a Python package providing convenient functions for analyzing
+`cbiohub` is a Python package and command line tool that simplifies the analysis of
 data files from [cBioPortal](https://cbioportal.org). Although several Python
 API clients exist, they work on slices of the cBioPortal data retrieved via the
-REST API rather than enabling easy analysis of all data files in bulk.
-This package aims to provide a more user-friendly interface for accessing data
+REST API rather than enabling analysis of all data files in bulk.
+This package aims to provide a more analyst-friendly interface for accessing data
 from cBioPortal like those stored in the public
 [datahub](https://github.com/cBioPortal/datahub). By using combined and harmonized parquet files, rather
-than individual flat csv/tsv files per study, the data can be analyzed more easily, requiring less 
-data prep for the analyst. The `cbiohub` has a CLI with a data module enabling ingestion of the data and conversion
+than individual flat csv/tsv files per study, loading and querying data is faster. The `cbiohub` has a CLI with a data module enabling ingestion of the data and conversion
 to parquet, as well as an analysis module that leverages `duckdb` to analyze data locally. Since `parquet` files
 are a common standard, one can use many other programming languages or data warehousing tools to analyze them.
 
