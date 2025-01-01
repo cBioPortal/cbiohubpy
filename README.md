@@ -8,9 +8,12 @@ API clients exist, they work on slices of the cBioPortal data retrieved via the
 REST rather than that they enable easy analysis of all the data files in bulk.
 This package aims to provide a more user-friendly interface for accessing data
 from cBioPortal like those stored in the public
-[datahub](https://github.com/cBioPortal/datahub). By using parquet files, rather
-than flat csv/tsv files, the data can be analyzed much more quickly and
-efficiently.
+[datahub](https://github.com/cBioPortal/datahub). By using combined and harmonized parquet files, rather
+than individual flat csv/tsv files per study, the data can be analyzed much more easily, requiring less 
+data prep for the analyst.
+
+<img width="704" alt="image" src="https://github.com/user-attachments/assets/6035d2bc-76a3-4f0c-a6ae-c6f6b48c8cb6" />
+
 
 ## Usage
 
