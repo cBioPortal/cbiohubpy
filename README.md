@@ -2,18 +2,21 @@
 
 **WARNING ⚠️: This package is still under construction.**
 
-`cbiohub` is a Python package that provides convenience functions for analyzing
+`cbiohub` is a Python package providing convenient functions for analyzing
 data files from [cBioPortal](https://cbioportal.org). Although several Python
 API clients exist, they work on slices of the cBioPortal data retrieved via the
-REST rather than that they enable easy analysis of all the data files in bulk.
+REST API rather than enabling easy analysis of all data files in bulk.
 This package aims to provide a more user-friendly interface for accessing data
 from cBioPortal like those stored in the public
 [datahub](https://github.com/cBioPortal/datahub). By using combined and harmonized parquet files, rather
-than individual flat csv/tsv files per study, the data can be analyzed much more easily, requiring less 
-data prep for the analyst.
+than individual flat csv/tsv files per study, the data can be analyzed more easily, requiring less 
+data prep for the analyst. The `cbiohub` has a CLI with a data module enabling ingestion of the data and conversion
+to parquet, as well as an analysis module that leverages `duckdb` to analyze data locally. Since `parquet` files
+are a common standard, one can use many other programming languages or data warehousing tools to analyze them.
 
-<img width="704" alt="image" src="https://github.com/user-attachments/assets/6035d2bc-76a3-4f0c-a6ae-c6f6b48c8cb6" />
+<img width="714" alt="image" src="https://github.com/user-attachments/assets/9a1c9a79-7336-49ce-89b1-43c5b614f0ea" />
 
+For convenience, pre-combined parquet files from [datahub](https://github.com/cbioPortal/datahub) are directly available from hugging face: https://huggingface.co/datasets/cBioPortal/datahub/tree/main/data. They can be used directly
 
 ## Usage
 
@@ -27,7 +30,7 @@ You can e.g. download the cBioPortal datahub files:
 git clone git@github.com:cbioportal/datahub ~/git/datahub
 ```
 
-### Step 2: Ingest and Combine
+#### Step 2: Ingest and Combine
 
 Now ingest them i.e. convert them into parquet files on your local machine:
 
@@ -42,7 +45,7 @@ All the data by default gets stored in `~/cbiohub/`. Combine all the study data 
 cbiohub data combine
 ```
 
-### Step 3: Analyze
+#### Step 3: Analyze
 
 Now you can use the `cbiohub` package to analyze the data quickly. For example,
 you can load the combined study data into a pandas DataFrame:
@@ -105,7 +108,7 @@ them to your liking):
 After data digestion, `cbiohub` mainly provides a convenient command line
 interface to run sql queries against a set of harmonized parquet files.
 
-### Clean
+#### Clean
 
 Remove all local parquet files.
 
@@ -124,7 +127,7 @@ poetry install
 You can run the cli using e.g.:
 
 ```sh
-poetry ingest ~/git/datahub/public/
+poetry run cbiohub data ingest ~/git/datahub/public/
 ```
 
 and
