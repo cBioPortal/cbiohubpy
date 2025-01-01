@@ -30,13 +30,13 @@ Now ingest them i.e. convert them into parquet files on your local machine:
 
 ```sh
 
-cbiohub ingest ~/git/datahub/public/
+cbiohub data ingest ~/git/datahub/public/
 ```
 
 All the data by default gets stored in `~/cbiohub/`. Combine all the study data together into a single study:
 
 ```sh
-cbiohub combine
+cbiohub data combine
 ```
 
 ### Step 3: Analyze

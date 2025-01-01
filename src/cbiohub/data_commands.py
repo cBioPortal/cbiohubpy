@@ -2,6 +2,8 @@ import click
 from tqdm import tqdm
 from pathlib import Path
 
+from cbiohub.study import Study
+
 
 @click.group()
 def data():
