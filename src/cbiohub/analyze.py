@@ -1,30 +1,11 @@
 from pathlib import Path
 from typing import Union
-import pyarrow.parquet as pq
+import pandas as pd
 import pyarrow.dataset as ds
 import duckdb
-import pyarrow as pa
-import pandas as pd
-from dynaconf import settings
 
 from cbiohub.variant import GenomicVariant, ProteinVariant
-
-MUTATION_COLUMNS = {
-    "Chromosome": pa.string(),
-    "Start_Position": pa.string(),
-    "End_Position": pa.string(),
-    "Reference_Allele": pa.string(),
-    "Tumor_Seq_Allele1": pa.string(),
-    "Tumor_Seq_Allele2": pa.string(),
-    "t_ref_count": pa.string(),
-    "t_alt_count": pa.string(),
-    "n_ref_count": pa.string(),
-    "n_alt_count": pa.string(),
-    "Hugo_Symbol": pa.string(),
-    "HGVSp_Short": pa.string(),
-    "Tumor_Sample_Barcode": pa.string(),
-    "study_id": pa.string(),
-}
+from cbiohub.data_commands import MUTATION_COLUMNS
 
 
 def get_combined_df(directory=None):

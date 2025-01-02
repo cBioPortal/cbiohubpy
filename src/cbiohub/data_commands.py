@@ -1,8 +1,31 @@
+import time
 import click
 from tqdm import tqdm
 from pathlib import Path
+import pyarrow.parquet as pq
+import pyarrow as pa
+from dynaconf import (
+    settings,
+)  # Assuming settings is a module with PROCESSED_PATH defined
 
-from cbiohub.study import Study
+from cbiohub.study import Study, MUTATION_DATA_FILES
+
+MUTATION_COLUMNS = {
+    "Chromosome": pa.string(),
+    "Start_Position": pa.string(),
+    "End_Position": pa.string(),
+    "Reference_Allele": pa.string(),
+    "Tumor_Seq_Allele1": pa.string(),
+    "Tumor_Seq_Allele2": pa.string(),
+    "t_ref_count": pa.string(),
+    "t_alt_count": pa.string(),
+    "n_ref_count": pa.string(),
+    "n_alt_count": pa.string(),
+    "Hugo_Symbol": pa.string(),
+    "HGVSp_Short": pa.string(),
+    "Tumor_Sample_Barcode": pa.string(),
+    "study_id": pa.string(),
+}
 
 
 @click.group()
@@ -136,7 +159,6 @@ def combine(output_dir):
                     pbar.update(1)
                     continue
 
-                mutation_file = study.processed_path / "data_mutations.parquet"
                 clinical_patient_file = (
                     study.processed_path / "data_clinical_patient.parquet"
                 )
@@ -144,21 +166,23 @@ def combine(output_dir):
                     study.processed_path / "data_clinical_sample.parquet"
                 )
 
-                if mutation_file.exists():
-                    table = pq.read_table(mutation_file)
-                    # Select only specific columns and adjust their types
-                    columns_to_include = MUTATION_COLUMNS
+                for mutation_file in MUTATION_DATA_FILES:
+                    mutation_file = study.processed_path / mutation_file.replace("txt","parquet")
+                    if mutation_file.exists():
+                        table = pq.read_table(mutation_file)
+                        # Select only specific columns and adjust their types
+                        columns_to_include = MUTATION_COLUMNS
 
-                    # Filter out columns that do not exist in the table schema
-                    existing_columns = {
-                        col: dtype
-                        for col, dtype in columns_to_include.items()
-                        if col in table.schema.names
-                    }
+                        # Filter out columns that do not exist in the table schema
+                        existing_columns = {
+                            col: dtype
+                            for col, dtype in columns_to_include.items()
+                            if col in table.schema.names
+                        }
 
-                    table = table.select(list(existing_columns.keys()))
-                    table = table.cast(pa.schema(existing_columns))
-                    mutation_tables.append(table)
+                        table = table.select(list(existing_columns.keys()))
+                        table = table.cast(pa.schema(existing_columns))
+                        mutation_tables.append(table)
                 if clinical_patient_file.exists():
                     clinical_patient_tables.append(pq.read_table(clinical_patient_file))
                 if clinical_sample_file.exists():
