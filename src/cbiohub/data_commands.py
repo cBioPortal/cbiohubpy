@@ -167,7 +167,9 @@ def combine(output_dir):
                 )
 
                 for mutation_file in MUTATION_DATA_FILES:
-                    mutation_file = study.processed_path / mutation_file.replace("txt","parquet")
+                    mutation_file = study.processed_path / mutation_file.replace(
+                        "txt", "parquet"
+                    )
                     if mutation_file.exists():
                         table = pq.read_table(mutation_file)
                         # Select only specific columns and adjust their types

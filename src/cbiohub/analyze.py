@@ -99,8 +99,12 @@ def find_variant(
 
 
 def variant_frequency_per_clinical_attribute(
-    variant: Union[GenomicVariant, ProteinVariant], clinical_attribute,
-    directory=None, group_by_study_id=False, count_samples=False, sql=False
+    variant: Union[GenomicVariant, ProteinVariant],
+    clinical_attribute,
+    directory=None,
+    group_by_study_id=False,
+    count_samples=False,
+    sql=False,
 ):
     """Check how frequently a particular variant occurs per cancer type."""
     if directory is None:
@@ -136,8 +140,12 @@ def variant_frequency_per_clinical_attribute(
     """
     group_by_clause = f"clinical.{clinical_attribute}, TotalPerAttribute.total"
     total_group_by = f"clinical.{clinical_attribute}"
-    total_join = f"clinical.{clinical_attribute} = TotalPerAttribute.{clinical_attribute}"
-    total_select = f"clinical.{clinical_attribute}, COUNT(DISTINCT {count_attribute}) AS total"
+    total_join = (
+        f"clinical.{clinical_attribute} = TotalPerAttribute.{clinical_attribute}"
+    )
+    total_select = (
+        f"clinical.{clinical_attribute}, COUNT(DISTINCT {count_attribute}) AS total"
+    )
 
     if group_by_study_id:
         total_select = f"clinical.STUDY_ID, {total_select}"

@@ -46,6 +46,7 @@ def cli():
 
 cli.add_command(data)
 
+
 @cli.command()
 def config():
     """Display the current configuration settings."""
@@ -86,11 +87,18 @@ def find(arg1, arg2, arg3, arg4, arg5, processed_dir, sql):
     if arg1 and arg2 and arg3 and arg4:
         # assuming chrom/pos/start/end
         exists, unique_ids = find_variant(
-            chrom=arg1, start=arg2, end=arg3, ref=arg4, alt=arg5, directory=processed_dir
+            chrom=arg1,
+            start=arg2,
+            end=arg3,
+            ref=arg4,
+            alt=arg5,
+            directory=processed_dir,
         )
     elif arg1 and arg2:
         # assuming gene/protein_change
-        exists, unique_ids = find_variant(hugo_symbol=arg1, protein_change=arg2, directory=processed_dir)
+        exists, unique_ids = find_variant(
+            hugo_symbol=arg1, protein_change=arg2, directory=processed_dir
+        )
     else:
         click.echo(click.style("❌ Invalid arguments.", fg="red"))
         return
@@ -108,6 +116,7 @@ def find(arg1, arg2, arg3, arg4, arg5, processed_dir, sql):
     else:
         click.echo(click.style("❌ Variant not found.", fg="red"))
 
+
 def detect_variant_type(args):
     """
     Detects the variant type based on the number and structure of arguments.
@@ -121,10 +130,13 @@ def detect_variant_type(args):
     elif len(args) == 2:
         return ProteinVariant(*args)
     else:
-        raise click.UsageError("Could not detect variant type. Ensure arguments match either chrom/start/end/ref/alt or gene/protein_change format.")
+        raise click.UsageError(
+            "Could not detect variant type. Ensure arguments match either chrom/start/end/ref/alt or gene/protein_change format."
+        )
+
 
 @cli.command(help="Check how frequently a particular variant occurs per cancer type.")
-@click.argument('args', nargs=-1, required=True)
+@click.argument("args", nargs=-1, required=True)
 @click.option(
     "--clinical-attribute",
     default="CANCER_TYPE",
@@ -143,14 +155,20 @@ def detect_variant_type(args):
     help="Count samples instead of patients",
 )
 @common_options
-def variant_frequency(args, clinical_attribute, processed_dir, sql, group_by_study_id, count_samples):
+def variant_frequency(
+    args, clinical_attribute, processed_dir, sql, group_by_study_id, count_samples
+):
     """Check how frequently a particular variant occurs per cancer type (or
     other clinical sample attributes)."""
     variant = detect_variant_type(args)
 
     result = variant_frequency_per_clinical_attribute(
-        variant, clinical_attribute, directory=processed_dir, sql=sql, group_by_study_id=group_by_study_id,
-        count_samples=count_samples
+        variant,
+        clinical_attribute,
+        directory=processed_dir,
+        sql=sql,
+        group_by_study_id=group_by_study_id,
+        count_samples=count_samples,
     )
     if sql:
         return print(result)

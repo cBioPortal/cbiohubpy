@@ -5,7 +5,12 @@ from dynaconf import (
     settings,
 )  # Assuming settings is a module with PROCESSED_PATH defined
 
-MUTATION_DATA_FILES = ["data_mutations.txt", "data_mutations_extended.txt", "data_nonsignedout_mutations.txt"]
+MUTATION_DATA_FILES = [
+    "data_mutations.txt",
+    "data_mutations_extended.txt",
+    "data_nonsignedout_mutations.txt",
+]
+
 
 class Study:
     def __init__(self, study_path: Path):
@@ -16,7 +21,9 @@ class Study:
         self.patient_data_file = "data_clinical_patient.txt"
         # mutation data can have multiple names
         self.mutation_data_files = [
-            mut_file for mut_file in MUTATION_DATA_FILES if (self.study_path / mut_file).exists()
+            mut_file
+            for mut_file in MUTATION_DATA_FILES
+            if (self.study_path / mut_file).exists()
         ]
         # all mutation data files are combined into this file
         self.mutation_parquet_file = "data_mutations.parquet"
@@ -180,7 +187,10 @@ class Study:
         source_files = [
             self.study_path / self.sample_data_file,
             self.study_path / self.patient_data_file,
-            *[self.study_path / mutation_data_file for mutation_data_file in self.mutation_data_files],
+            *[
+                self.study_path / mutation_data_file
+                for mutation_data_file in self.mutation_data_files
+            ],
             self.study_path / "meta_study.txt",
         ]
 
