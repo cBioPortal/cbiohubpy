@@ -1,8 +1,12 @@
 [tool.poetry]
 name = "cbiohub"
-version = "0.1.0"
+version = "0.1.1"
 description = "Convenience functions for accessing cBioPortal data files"
 authors = ["Ino de Bruijn <ino@ino.bio>"]
+readme = "README.md"
+homepage = "https://github.com/cbioportal/cbiohubpy"
+documentation = "https://github.com/cbioportal/cbiohubpy"
+keywords = ["cbioportal", "cancer", "genomics", "parquet"]
 
 [tool.poetry.dependencies]
 python = ">=3.12"
